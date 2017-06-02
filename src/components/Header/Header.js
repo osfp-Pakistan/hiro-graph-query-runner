@@ -35,7 +35,6 @@ const Header = ({ me = false, logout }) => {
             >
                 <svg
                     aria-hidden="true"
-                    class="octicon octicon-mark-github"
                     height="32"
                     version="1.1"
                     viewBox="0 0 16 16"

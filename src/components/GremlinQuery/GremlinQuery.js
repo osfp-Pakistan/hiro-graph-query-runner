@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import cuid from "cuid";
 import { connect } from "react-redux";
+import { getMyId } from "hiro-graph-redux";
 
 import { actionAddQuery } from "../../reduction/query";
 import { queryTaskAction } from "../../tasks/query";
@@ -61,7 +62,7 @@ class GremlinQuery extends Component {
                             className="form-control form-control-lg mr-2 col-2"
                             placeholder="root vertex id"
                             ref={el => (this.rootInput = el)}
-                            defaultValue={`cwalker@arago.de`}
+                            defaultValue={this.props.me}
                         />
                         <input
                             type="text"
@@ -87,6 +88,12 @@ class GremlinQuery extends Component {
     }
 }
 
+const mstp = state => {
+    return {
+        me: getMyId(state)
+    };
+};
+
 const mdtp = dispatch => {
     return {
         boundAddQuery: (id, rootId, query) =>
@@ -97,4 +104,4 @@ const mdtp = dispatch => {
     };
 };
 
-export default connect(undefined, mdtp)(GremlinQuery);
+export default connect(mstp, mdtp)(GremlinQuery);
