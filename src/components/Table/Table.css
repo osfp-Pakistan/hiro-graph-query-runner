@@ -1,0 +1,5 @@
+.Table th {
+    white-space: nowrap;
+    vertical-align: middle !important;
+    text-align: center;
+}
