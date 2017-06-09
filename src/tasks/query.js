@@ -17,13 +17,12 @@ const {
     action: queryTaskAction,
     selector: queryTaskSelector
 } = createTask(({ orm, getState }, queryId) => {
-    console.log(getState());
     const query = getState().queries[queryId];
     if (!query) {
         return Promise.reject(new Error("cannot find query: " + queryId));
     }
     const { type, args } = query;
-    return orm.getConnection()[type](...args);
+    return orm.getClient()[type](...args);
 }, id => "q:" + id);
 
 export { queryTaskAction, queryTaskSelector };

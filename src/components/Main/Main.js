@@ -5,6 +5,7 @@ import Message from "../Message";
 import LuceneQuery from "../LuceneQuery";
 import GremlinQuery from "../GremlinQuery";
 import QueryHistory from "../QueryHistory";
+import ConnectionInfo from "../ConnectionInfo";
 
 const Splash = () => (
     <Message title="Welcome to the Query Runner">
@@ -30,6 +31,9 @@ const Splash = () => (
             >
                 See your query history
             </Link>
+            <Link className="list-group-item list-group-item-action" to="/info">
+                See your HIRO Graph Connection Information
+            </Link>
         </div>
     </Message>
 );
@@ -49,6 +53,7 @@ const Main = () => (
         <Route path="/history" component={QueryHistory} />
         <Route path="/lucene" component={LuceneQuery} />
         <Route path="/gremlin" component={GremlinQuery} />
+        <Route path="/info" component={ConnectionInfo} />
         <Route component={PageNotFound} />
     </Switch>
 );
