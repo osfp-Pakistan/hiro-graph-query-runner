@@ -2,7 +2,8 @@
   "name": "hiro-graph-query-runner",
   "version": "0.1.0",
   "devDependencies": {
-    "react-scripts": "1.0.7"
+    "gh-pages": "^1.0.0",
+    "react-scripts": "^1.0.7"
   },
   "dependencies": {
     "bootstrap": "^4.0.0-alpha.6",
@@ -21,9 +22,11 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "deploy": "NODE_ENV=production npm run build && cp public/404.html build/ && gh-pages -d build"
   },
   "eslintConfig": {
     "extends": "react-app"
-  }
+  },
+  "homepage": "https://arago.github.io/hiro-graph-query-runner/"
 }

@@ -2,12 +2,16 @@
 
 This app is an example of how to use the various HIRO Graph libraries, most notably the `hiro-graph-redux` package. It was bootstrapped with `create-react-app` (hence the tail of this README) and then simply built upon to create a minimal, but functional application for running Gremlin/Lucene queries against a HIRO Graph instance.
 
+## Online Demo
+
+You can see a demo of this application on [Github Pages](https://arago.github.io/hiro-graph-query-runner/).
+
 ## Getting Started
 
  1. clone this repo
  2. run `npm install`
  3. run `npm start`
- 4. open a browser at `http://localhost:3000/
+ 4. open a browser at `http://localhost:3000/`
 
 The repository comes with a HIRO Graph Application ClientID that has read-only access to public data. This means you can run this app locally (at `http://localhost:3000/`) and it is automatically configured to connect to the [HIRO Knowledge Core](https://graph.graphit.co) and be able to read data.
 

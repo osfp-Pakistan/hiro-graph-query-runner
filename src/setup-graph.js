@@ -11,7 +11,7 @@ import {
 
 // Our app configuration
 const clientId = process.env.REACT_APP_HIRO_CLIENT_ID;
-const redirectUri = process.env.REACT_APP_REDIRET_URI;
+const redirectUri = process.env.REACT_APP_REDIRECT_URI;
 const hiroGraphApi = process.env.REACT_APP_HIRO_GRAPH_API;
 const hiroGraphAuthURL = process.env.REACT_APP_HIRO_GRAPH_AUTH_URL;
 const hiroGraphLogoutURL = process.env.REACT_APP_HIRO_GRAPH_LOGOUT_URL;

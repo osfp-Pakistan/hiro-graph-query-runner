@@ -45,6 +45,23 @@ class LuceneQuery extends Component {
                 <ul>
                     <li>Auto-Complete previous values</li>
                     <li>
+                        Support
+                        {" "}
+                        <code>limit</code>
+                        {" "}
+                        and
+                        {" "}
+                        <code>offset</code>
+                        {" "}
+                        value (currently always
+                        {" "}
+                        <code>limit=50</code>
+                        ,
+                        {" "}
+                        <code>offset=0</code>
+                        )
+                    </li>
+                    <li>
                         Remember if we have run the same query before and prompt to re-run if wanted, or show old result.
                     </li>
                     <li>

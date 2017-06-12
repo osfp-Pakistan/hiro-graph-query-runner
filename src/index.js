@@ -43,7 +43,7 @@ setupOauth(store);
 if (window.parent === window) {
     // This check means we don't try to render the app in the popup window used for Auth.
     ReactDOM.render(
-        <BrowserRouter>
+        <BrowserRouter basename={process.env.REACT_APP_BASENAME || "/"}>
             <Provider store={store}>
                 <App />
             </Provider>

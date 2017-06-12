@@ -43,7 +43,7 @@ const App = ({ login, me, boundLogin, boundLogout }) => (
                             <button
                                 type="button"
                                 className="btn btn-info btn-xl"
-                                onClick={() => window.location.reload()}
+                                onClick={() => boundLogout()}
                             >
                                 Refresh Page
                             </button>
