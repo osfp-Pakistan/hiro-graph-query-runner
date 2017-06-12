@@ -1,4 +1,5 @@
 import React from "react";
+import isplainobject from "lodash.isplainobject";
 import "./Table.css";
 /**
  *  Show a table of OGIT data.
@@ -31,11 +32,24 @@ const Table = ({ rows = [], keys = [] }) => {
                     return (
                         <tr key={"r" + i}>
                             {Array.isArray(r)
-                                ? r.map((v, ii) => <td key={"v" + ii}>{v}</td>)
-                                : <td colspan={keys.length || 1}>
-                                      <code>
-                                          {JSON.stringify(r.meta, null, 2)}
-                                      </code>
+                                ? r.map((v, ii) => {
+                                      if (isplainobject(v) && "span" in v) {
+                                          return (
+                                              <td
+                                                  key={"v" + ii}
+                                                  colSpan={v.span}
+                                              >
+                                                  {v.content}
+                                              </td>
+                                          );
+                                      }
+                                      return <td key={"v" + ii}>{v}</td>;
+                                  })
+                                : <td colSpan={keys.length || 1}>
+                                      {"meta" in r &&
+                                          <code>
+                                              {JSON.stringify(r.meta, null, 2)}
+                                          </code>}
                                   </td>}
                         </tr>
                     );

@@ -6,6 +6,7 @@ import LuceneQuery from "../LuceneQuery";
 import GremlinQuery from "../GremlinQuery";
 import QueryHistory from "../QueryHistory";
 import ConnectionInfo from "../ConnectionInfo";
+import SchemaExplorer from "../SchemaExplorer";
 
 const Splash = () => (
     <Message title="Welcome to the Query Runner">
@@ -53,6 +54,7 @@ const Main = () => (
         <Route path="/history" component={QueryHistory} />
         <Route path="/lucene" component={LuceneQuery} />
         <Route path="/gremlin" component={GremlinQuery} />
+        <Route path="/schema" component={SchemaExplorer} />
         <Route path="/info" component={ConnectionInfo} />
         <Route component={PageNotFound} />
     </Switch>

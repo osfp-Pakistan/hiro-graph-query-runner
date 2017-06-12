@@ -7,9 +7,9 @@
   "dependencies": {
     "bootstrap": "^4.0.0-alpha.6",
     "cuid": "^1.3.8",
-    "hiro-graph-orm": "^0.2.0",
+    "hiro-graph-orm": "^0.2.1",
     "hiro-graph-orm-mappings": "^0.2.0",
-    "hiro-graph-redux": "^0.2.0",
+    "hiro-graph-redux": "^0.2.1",
     "react": "^15.5.4",
     "react-dom": "^15.5.4",
     "react-redux": "^5.0.5",

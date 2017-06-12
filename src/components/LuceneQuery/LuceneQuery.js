@@ -40,6 +40,7 @@ class LuceneQuery extends Component {
         const { id } = this.state;
         return (
             <div className="container-fluid">
+                <p className="display-4">Lucene Query</p>
                 <p><strong>Improve this!</strong></p>
                 <ul>
                     <li>Auto-Complete previous values</li>

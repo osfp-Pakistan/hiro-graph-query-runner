@@ -25,8 +25,11 @@ const Header = ({ me = false, logout }) => {
             <li key="history" className="nav-item">
                 <Link className="nav-link" to="/history">History</Link>
             </li>,
+            <li key="schema" className="nav-item">
+                <Link className="nav-link" to="/schema">Schema</Link>
+            </li>,
             <li key="info" className="nav-item">
-                <Link className="nav-link" to="/info">Connection Info</Link>
+                <Link className="nav-link" to="/info">Connection</Link>
             </li>
         );
     }
