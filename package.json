@@ -1,6 +1,6 @@
 {
   "name": "hiro-graph-query-runner",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "devDependencies": {
     "gh-pages": "^1.0.0",
