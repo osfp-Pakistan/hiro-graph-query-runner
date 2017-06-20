@@ -6,7 +6,7 @@ import { queryTaskSelector } from "../../tasks/query.js";
 import Loader from "../Loader";
 import Table from "../Table";
 
-const Result = ({ id, queryTask }) => {
+export const ResultTable = ({ id, queryTask }) => {
     return whenTask(queryTask, {
         loading: () => <Loader title="running query..." />,
         error: err => <pre><code>{err.message}</code></pre>,
@@ -17,7 +17,11 @@ const Result = ({ id, queryTask }) => {
             }
             return (
                 <div>
-                    <p className="display-4">{`got ${results.length} result${results.length === 1 ? "" : "s"} in ${queryTask.finish - queryTask.start}ms`}</p>
+                    <pre>
+                        {`got ${results.length} result${results.length === 1
+                            ? ""
+                            : "s"} in ${queryTask.finish - queryTask.start}ms`}
+                    </pre>
                     {results.length && <Table keys={keys} rows={rows} />}
                 </div>
             );
@@ -31,7 +35,7 @@ const mstp = (state, { id }) => {
     };
 };
 
-export default connect(mstp)(Result);
+export default connect(mstp)(ResultTable);
 
 /**
  *  Extract the keys from each row into the keys array then sort each
@@ -43,7 +47,7 @@ function preprocess(data) {
     //extract the keys
     const keySet = new Set();
     data.forEach(v => {
-        if ("ogit/_id" in v) {
+        if ("ogit/_id" in v || "_id" in v) {
             //it is a vertex extract the keys
             Object.keys(v).forEach(k => keySet.add(k));
         }
@@ -53,7 +57,7 @@ function preprocess(data) {
     //now map each row of data into either an array in key order (with blanks)
     // or a meta row
     const rows = data.map(v => {
-        if ("ogit/_id" in v) {
+        if ("ogit/_id" in v || "_id" in v) {
             return keys.map(formatField(v));
         } else {
             return { meta: v };

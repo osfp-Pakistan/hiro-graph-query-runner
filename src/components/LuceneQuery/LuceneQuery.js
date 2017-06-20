@@ -40,56 +40,59 @@ class LuceneQuery extends Component {
         const { id } = this.state;
         return (
             <div className="container-fluid">
-                <p className="display-4">Lucene Query</p>
-                <p><strong>Improve this!</strong></p>
-                <ul>
-                    <li>Auto-Complete previous values</li>
-                    <li>
-                        Support
-                        {" "}
-                        <code>limit</code>
-                        {" "}
-                        and
-                        {" "}
-                        <code>offset</code>
-                        {" "}
-                        value (currently always
-                        {" "}
-                        <code>limit=50</code>
-                        ,
-                        {" "}
-                        <code>offset=0</code>
-                        )
-                    </li>
-                    <li>
-                        Remember if we have run the same query before and prompt to re-run if wanted, or show old result.
-                    </li>
-                    <li>
-                        Allow use of
-                        {" "}
-                        <code>hiro-graph-lucene</code>
-                        {" "}
-                        package to allow construction of queries in the
-                        {" "}
-                        <em>object notation</em>
-                    </li>
-                </ul>
-                <div>
-                    <form className="d-flex mb-2" onSubmit={this.runQuery}>
-                        <input
-                            type="text"
-                            className="form-control form-control-lg mr-2"
-                            placeholder="enter lucene query here"
-                            ref={el => (this.input = el)}
-                            defaultValue={`+ogit/_type:"ogit/Person"`}
-                        />
-                        <button
-                            type="submit"
-                            className="btn btn-success btn-lg"
-                        >
-                            run!
-                        </button>
-                    </form>
+                <div className="container">
+                    <h2>Lucene Query</h2>
+                    <p><strong>Improve this!</strong></p>
+                    <ul>
+                        <li>Auto-Complete previous values</li>
+                        <li>
+                            Support
+                            {" "}
+                            <code>limit</code>
+                            {" "}
+                            and
+                            {" "}
+                            <code>offset</code>
+                            {" "}
+                            value (currently always
+                            {" "}
+                            <code>limit=50</code>
+                            ,
+                            {" "}
+                            <code>offset=0</code>
+                            )
+                        </li>
+                        <li>
+                            Remember if we have run the same query before and
+                            prompt to re-run if wanted, or show old result.
+                        </li>
+                        <li>
+                            Allow use of
+                            {" "}
+                            <code>hiro-graph-lucene</code>
+                            {" "}
+                            package to allow construction of queries in the
+                            {" "}
+                            <em>object notation</em>
+                        </li>
+                    </ul>
+                    <div>
+                        <form className="d-flex mb-2" onSubmit={this.runQuery}>
+                            <input
+                                type="text"
+                                className="form-control form-control-lg mr-2"
+                                placeholder="enter lucene query here"
+                                ref={el => (this.input = el)}
+                                defaultValue={`+ogit/_type:"ogit/Person"`}
+                            />
+                            <button
+                                type="submit"
+                                className="btn btn-success btn-lg"
+                            >
+                                run!
+                            </button>
+                        </form>
+                    </div>
                 </div>
                 <div>
                     {id && <Result id={id} />}

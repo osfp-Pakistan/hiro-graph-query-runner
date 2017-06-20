@@ -1,2 +1,3 @@
-import Result from "./Result";
+import Result, { ResultTable } from "./Result";
+export { ResultTable };
 export default Result;

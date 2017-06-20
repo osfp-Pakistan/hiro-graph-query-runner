@@ -3,10 +3,7 @@ import ReactDOM from "react-dom";
 import { combineReducers, createStore, compose } from "redux";
 import { Provider } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
-
-import "bootstrap/dist/css/bootstrap.min.css"; // for some reason an @import in the index.css didn't work...
 import "./index.css";
-
 import "./polyfills";
 
 import App from "./components/App";

@@ -1,9 +1,7 @@
 import React from "react";
 
 const Message = ({ children, title = false, type = "default" }) => {
-    const titleClass = type === "default"
-        ? "display-2"
-        : "display-2 text-" + type;
+    const titleClass = type === "default" ? "" : "text-" + type;
     return (
         <div className="container-fluid text-center">
             {title && <h2 className={titleClass}>{title}</h2>}

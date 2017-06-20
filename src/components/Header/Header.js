@@ -6,7 +6,7 @@ import "./Header.css";
 
 const valignMiddle = { verticalAlign: "middle" };
 const Logo = () =>
-    Loader.Static({ width: "3rem", height: "3rem", style: valignMiddle });
+    Loader.Static({ width: "2rem", height: "2rem", style: valignMiddle });
 
 const imgStyle = { width: "2rem", height: "2rem" };
 
@@ -30,6 +30,9 @@ const Header = ({ me = false, logout }) => {
             </li>,
             <li key="info" className="nav-item">
                 <Link className="nav-link" to="/info">Connection</Link>
+            </li>,
+            <li key="orm" className="nav-item">
+                <Link className="nav-link" to="/orm">ORM</Link>
             </li>
         );
     }
@@ -62,7 +65,7 @@ const Header = ({ me = false, logout }) => {
 
                 <span className="Header-title">HIRO Graph Query Runner</span>
             </Link>
-            <ul className="navbar-nav mr-auto">
+            <ul className="navbar-nav mr-auto NavBar">
                 {links}
             </ul>
             {me &&

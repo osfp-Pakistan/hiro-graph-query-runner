@@ -1,5 +1,7 @@
 .Header-title {
-    font-size: 1.5rem;
-    line-height: 1.5rem;
-    padding: 1rem;
+    margin-left: 0.75rem;
+}
+
+.NavBar {
+    align-items: center;
 }

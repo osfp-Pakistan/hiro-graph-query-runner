@@ -1,6 +1,8 @@
 import React, { Component } from "react";
+import "./SchemaExplorer.css";
 import { NavLink, Switch, Route } from "react-router-dom";
-
+import { withRouter } from "react-router";
+import cx from "classnames";
 import mappings from "hiro-graph-orm-mappings";
 import { Schema } from "hiro-graph-orm";
 
@@ -58,7 +60,7 @@ const getPropInfo = (defs = {}, entity) => {
     });
 };
 
-const schemaData = schema.names.map(name => {
+export const schemaData = schema.names.map(name => {
     const entity = schema.get(name);
     const def = entity[$dangerouslyGetDefinition]();
     const props = getPropInfo(def.required, entity).concat(
@@ -77,6 +79,7 @@ const schemaData = schema.names.map(name => {
                 query: getRelationQuery(entity, alias).toString()
             };
         }),
+        def,
         props
     };
 });
@@ -87,36 +90,99 @@ const schemaMap = schemaData.reduce((obj, entry) => {
 
 const schemaTypes = Object.keys(schemaMap).join("|");
 
+export class SchemaDropdown extends Component {
+    state = {
+        open: false
+    };
+
+    open = () => {
+        this.setState({ open: true });
+    };
+
+    close = () => {
+        this.setState({ open: false });
+    };
+
+    handleBlur = () => {
+        this.tid = setTimeout(this.close, 300);
+    };
+
+    componentWillUnmount() {
+        clearTimeout(this.tid);
+    }
+
+    render() {
+        const { open } = this.state;
+        const { label, onClickItem, selected, className } = this.props;
+
+        return (
+            <div className={cx("dropdown", open && "show", className)}>
+                <a
+                    tabIndex="-1"
+                    className="btn btn-secondary dropdown-toggle"
+                    onFocus={this.open}
+                    onBlur={this.handleBlur}
+                >
+                    {selected ? selected.name : label}
+                </a>
+                <div className="dropdown-menu">
+                    {schemaData.map(item => {
+                        const { name, key } = item;
+                        return (
+                            <button
+                                key={key}
+                                className="dropdown-item"
+                                onClick={() => onClickItem(item)}
+                            >
+                                {name}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    }
+}
+
 // mapping types as router components?
 
 class SchemaExplorer extends Component {
+    state = {
+        dropdownOpen: false
+    };
     render() {
+        const { location, match, history } = this.props;
+        const { dropdownOpen } = this.state;
+        let dropdownLabel = "Select Schema";
+        if (!match.isExact) {
+            const activeEntity = location.pathname.split("/").pop();
+            const selected = schemaData.filter(
+                ({ type }) => type === activeEntity
+            )[0];
+            if (selected) {
+                dropdownLabel = selected.name;
+            }
+        }
         return (
             <div className="container-fluid">
-                <p className="display-4">Schema Explorer</p>
-                <p className="lead">
-                    These entities are defined with the default Schema provided by
-                    {" "}
-                    <a href="https://github.com/arago/hiro-graph-js/packages/hiro-graph-orm-mappings">
-                        <code>hiro-graph-orm-mappings</code>
-                    </a>
-                    .
-                </p>
-                <ul className="nav nav-tabs">
-                    {schemaData.map(({ type, name, key }) => {
-                        return (
-                            <li className="nav-item" key={key}>
-                                <NavLink
-                                    activeClassName="active"
-                                    className="nav-link text-center"
-                                    to={`/schema/${type}`}
-                                >
-                                    {name}
-                                </NavLink>
-                            </li>
-                        );
-                    })}
-                </ul>
+                <div className="container">
+                    <h2>Schema Explorer</h2>
+                    <p>
+                        These entities are defined with the default Schema
+                        provided
+                        by
+                        {" "}
+                        <a href="https://github.com/arago/hiro-graph-js/tree/master/packages/hiro-graph-orm-mappings">
+                            <code>hiro-graph-orm-mappings</code>
+                        </a>
+                        .
+                    </p>
+                    <SchemaDropdown
+                        label={dropdownLabel}
+                        onClickItem={item =>
+                            history.push(`/schema/${item.type}`)}
+                    />
+                </div>
                 <Switch>
                     <Route
                         path={`/schema/:entity(${schemaTypes})`}
@@ -138,15 +204,17 @@ class SchemaExplorer extends Component {
     }
 }
 
-export default SchemaExplorer;
+export default withRouter(SchemaExplorer);
+
+const Required = () => <div style={{ textAlign: "center" }}>✔</div>;
 
 const fieldRow = ({ src, dst, required, virtual, codec }) => {
     return [
         <code>{dst}</code>,
         <code>{src}</code>,
         <code>{codec}</code>,
-        required ? "✔" : "✖",
-        virtual ? "✔" : "✖"
+        required ? <Required /> : "",
+        virtual ? <Required /> : ""
     ];
 };
 const fieldKeys = [
@@ -166,9 +234,70 @@ const relationKeys = [
     "Filter"
 ];
 
+class CodeView extends Component {
+    state = {
+        ready: false
+    };
+
+    componentDidMount() {
+        import("brace").then(ace => {
+            this.setState(
+                {
+                    ace
+                },
+                () => {
+                    Promise.all([
+                        import("brace/mode/javascript"),
+                        import("brace/theme/chrome")
+                    ]).then(() => {
+                        const editor = ace.edit(this._ref);
+                        this.editor = editor;
+                        editor.getSession().setMode("ace/mode/javascript");
+                        editor.setTheme("ace/theme/chrome");
+                        editor.setOptions({
+                            maxLines: Infinity,
+                            readOnly: this.props.readOnly
+                        });
+                        this.setValue(this.props.value);
+                    });
+                    this.setState({ ready: true });
+                }
+            );
+        });
+    }
+
+    componentWillUnmount() {
+        clearTimeout(this._tid);
+    }
+
+    componentWillReceiveProps({ value }) {
+        if (value !== this.props.value) {
+            if (this.editor) {
+                this.setValue(value);
+            }
+        }
+    }
+
+    setValue = value => {
+        this.editor.setValue(value);
+        this.editor.session.selection.setSelectionAnchor(1, 0);
+        this.editor.moveCursorTo(1, 0);
+    };
+
+    render() {
+        return (
+            <div
+                className={this.props.className}
+                ref={ref => (this._ref = ref)}
+            />
+        );
+    }
+}
+
 const SchemaEntity = ({ match }) => {
-    const { props, relations, name } = schemaMap[match.params.entity];
-    console.log(relations);
+    const { props, relations, name, def, type } = schemaMap[
+        match.params.entity
+    ];
     const fieldRows = props.map(fieldRow);
     const relRows = [];
     relations.forEach(({ alias, hops, query }) => {
@@ -183,7 +312,7 @@ const SchemaEntity = ({ match }) => {
                 <code>{direction}</code>,
                 <code>{verb}</code>,
                 vertices.map(v => <code key={v} className="mr-2">{v}</code>),
-                filter ? <code>{JSON.stringify(filter)}</code> : "✖"
+                filter ? <code>{JSON.stringify(filter)}</code> : "-"
             ]);
         });
         // get the gremlin query to find this relation
@@ -191,26 +320,50 @@ const SchemaEntity = ({ match }) => {
             false,
             {
                 span: 5,
-                content: <code>{query}</code>
+                content: (
+                    <input
+                        type="text"
+                        value={query}
+                        className="form-control"
+                        onFocus={e => e.target.select()}
+                        style={{ marginBottom: "24px" }}
+                        readOnly
+                    />
+                )
             }
         ]);
     });
 
     return (
-        <div>
-            <p className="display-4">{name}</p>
-            <h3>Fields</h3>
-            <p className="lead">
-                Each defined field in the mappping converts a field in the ontology to a typed field in the schema.
-            </p>
-            <Table keys={fieldKeys} rows={fieldRows} />
-
-            <h3>Relations</h3>
-            <p className="lead">
-                The relation definitions in the mapping can be multi-hop and the can be filtered at each hop. The relevant gremlin queries
-                are generated to take all of this into account.
-            </p>
-            <Table keys={relationKeys} rows={relRows} />
+        <div className="SchemaEntity">
+            <div className="container">
+                <h2>{name}</h2>
+                <p>
+                    <code>
+                        {type}.js
+                    </code>
+                </p>
+                <CodeView
+                    className="SchemaCodeView"
+                    value={"export default " + JSON.stringify(def, null, 4)}
+                    readOnly
+                />
+                <p> </p>
+                <h4>Fields</h4>
+                <p>
+                    Each defined field in the mappping converts a field in the
+                    ontology to a typed field in the schema.
+                </p>
+                <Table keys={fieldKeys} rows={fieldRows} />
+                <h4>Relations</h4>
+                <p>
+                    The relation definitions in the mapping can be multi-hop and
+                    the
+                    can be filtered at each hop. The relevant gremlin queries
+                    are generated to take all of this into account.
+                </p>
+                <Table keys={relationKeys} rows={relRows} />
+            </div>
         </div>
     );
 };
