@@ -7,11 +7,13 @@ import GremlinQuery from "../GremlinQuery";
 import QueryHistory from "../QueryHistory";
 import ConnectionInfo from "../ConnectionInfo";
 import SchemaExplorer from "../SchemaExplorer";
+import ORM from "../ORM";
 
-const Splash = () => (
+const Splash = () =>
     <Message title="Welcome to the Query Runner">
         <p className="lead">
-            This is a simple example app that lets you run queries against the HIRO Graph API
+            This is a simple example app that lets you run queries against the
+            HIRO Graph API
         </p>
         <div className="list-group d-inline-flex">
             <Link
@@ -36,19 +38,17 @@ const Splash = () => (
                 See your HIRO Graph Connection Information
             </Link>
         </div>
-    </Message>
-);
+    </Message>;
 
-const PageNotFound = ({ location }) => (
+const PageNotFound = ({ location }) =>
     <Message
         title={
             <span>
                 Sorry, there's no page at: <code>{location.pathname}</code>
             </span>
         }
-    />
-);
-const Main = () => (
+    />;
+const Main = () =>
     <Switch>
         <Route path="/" exact component={Splash} />
         <Route path="/history" component={QueryHistory} />
@@ -56,8 +56,8 @@ const Main = () => (
         <Route path="/gremlin" component={GremlinQuery} />
         <Route path="/schema" component={SchemaExplorer} />
         <Route path="/info" component={ConnectionInfo} />
+        <Route path="/orm" component={ORM} />
         <Route component={PageNotFound} />
-    </Switch>
-);
+    </Switch>;
 
 export default Main;

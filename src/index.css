@@ -1,12 +1,19 @@
+@import "~bootstrap/dist/css/bootstrap.min.css";
+
 body {
-  margin: 0;
-  padding: 0;
-  font-family: sans-serif;
-  overflow-y: scroll;
+    margin: 0;
+    padding: 0;
+    overflow-y: scroll;
+    font-size: 14px;
 }
 
-.btn-group-xl>.btn, .btn-xl {
+.btn-group-xl > .btn, .btn-xl {
     padding: .75rem 1.5rem;
     font-size: 2rem;
     border-radius: .3rem;
+}
+
+.base-container {
+    max-width: 1024px;
+    margin: auto;
 }

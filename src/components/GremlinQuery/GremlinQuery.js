@@ -34,52 +34,55 @@ class GremlinQuery extends Component {
         const { id } = this.state;
         return (
             <div className="container-fluid">
-                <p className="display-4">Gremlin Query</p>
-                <p><strong>Improve this!</strong></p>
-                <ul>
-                    <li>Auto-Complete previous values</li>
-                    <li>
-                        Allow use of the
-                        {" "}
-                        <code>hiro-graph-gremlin</code>
-                        {" "}
-                        query builder to construct queries
-                    </li>
-                    <li>
-                        Allow use of
-                        {" "}
-                        <code>hiro-graph-orm-mappings</code>
-                        {" "}
-                        to allow point-and-click query construction for defined relationships
-                    </li>
-                </ul>
-                <div className="row">
-                    <form
-                        className="d-flex mb-2 w-100"
-                        onSubmit={this.runQuery}
-                    >
-                        <input
-                            type="text"
-                            className="form-control form-control-lg mr-2 col-2"
-                            placeholder="root vertex id"
-                            ref={el => (this.rootInput = el)}
-                            defaultValue={this.props.me}
-                        />
-                        <input
-                            type="text"
-                            className="form-control form-control-lg mr-2"
-                            style={{ flexGrow: 1 }}
-                            placeholder="enter gremlin query here"
-                            ref={el => (this.queryInput = el)}
-                            defaultValue={`outE("ogit/belongs");`}
-                        />
-                        <button
-                            type="submit"
-                            className="btn btn-success btn-lg"
+                <div className="container">
+                    <h2>Gremlin Query</h2>
+                    <p><strong>Improve this!</strong></p>
+                    <ul>
+                        <li>Auto-Complete previous values</li>
+                        <li>
+                            Allow use of the
+                            {" "}
+                            <code>hiro-graph-gremlin</code>
+                            {" "}
+                            query builder to construct queries
+                        </li>
+                        <li>
+                            Allow use of
+                            {" "}
+                            <code>hiro-graph-orm-mappings</code>
+                            {" "}
+                            to allow point-and-click query construction for
+                            defined relationships
+                        </li>
+                    </ul>
+                    <div className="row">
+                        <form
+                            className="d-flex mb-2 w-100"
+                            onSubmit={this.runQuery}
                         >
-                            run!
-                        </button>
-                    </form>
+                            <input
+                                type="text"
+                                className="form-control form-control-lg mr-2 col-2"
+                                placeholder="root vertex id"
+                                ref={el => (this.rootInput = el)}
+                                defaultValue={this.props.me}
+                            />
+                            <input
+                                type="text"
+                                className="form-control form-control-lg mr-2"
+                                style={{ flexGrow: 1 }}
+                                placeholder="enter gremlin query here"
+                                ref={el => (this.queryInput = el)}
+                                defaultValue={`outE("ogit/belongs");`}
+                            />
+                            <button
+                                type="submit"
+                                className="btn btn-success btn-lg"
+                            >
+                                run!
+                            </button>
+                        </form>
+                    </div>
                 </div>
                 <div>
                     {id && <Result id={id} />}
