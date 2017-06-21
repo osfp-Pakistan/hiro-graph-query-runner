@@ -5,6 +5,8 @@ export function parseUserQueryEval(raw) {
         const len = userQuery.length;
         if (raw[0] === "{" && raw[len - 1] === "}") {
             try {
+                // We know eval is bad. We try to use a worker if possible
+                // eslint-disable-next-line no-eval
                 eval("parsedUserQuery = " + userQuery);
             } catch (err) {
                 reject(err);

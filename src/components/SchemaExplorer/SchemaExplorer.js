@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import "./SchemaExplorer.css";
-import { NavLink, Switch, Route } from "react-router-dom";
+import { Switch, Route } from "react-router-dom";
 import { withRouter } from "react-router";
 import cx from "classnames";
 import mappings from "hiro-graph-orm-mappings";
@@ -88,7 +88,7 @@ const schemaMap = schemaData.reduce((obj, entry) => {
     return obj;
 }, {});
 
-const schemaTypes = Object.keys(schemaMap).join("|");
+export const schemaTypes = Object.keys(schemaMap).join("|");
 
 export class SchemaDropdown extends Component {
     state = {
@@ -113,7 +113,12 @@ export class SchemaDropdown extends Component {
 
     render() {
         const { open } = this.state;
-        const { label, onClickItem, selected, className } = this.props;
+        const {
+            label = "Select a Schema",
+            onClickItem,
+            selected,
+            className
+        } = this.props;
 
         return (
             <div className={cx("dropdown", open && "show", className)}>
@@ -123,7 +128,7 @@ export class SchemaDropdown extends Component {
                     onFocus={this.open}
                     onBlur={this.handleBlur}
                 >
-                    {selected ? selected.name : label}
+                    {selected in schemaMap ? schemaMap[selected].name : label}
                 </a>
                 <div className="dropdown-menu">
                     {schemaData.map(item => {
@@ -151,18 +156,7 @@ class SchemaExplorer extends Component {
         dropdownOpen: false
     };
     render() {
-        const { location, match, history } = this.props;
-        const { dropdownOpen } = this.state;
-        let dropdownLabel = "Select Schema";
-        if (!match.isExact) {
-            const activeEntity = location.pathname.split("/").pop();
-            const selected = schemaData.filter(
-                ({ type }) => type === activeEntity
-            )[0];
-            if (selected) {
-                dropdownLabel = selected.name;
-            }
-        }
+        const { history } = this.props;
         return (
             <div className="container-fluid">
                 <div className="container">
@@ -177,11 +171,6 @@ class SchemaExplorer extends Component {
                         </a>
                         .
                     </p>
-                    <SchemaDropdown
-                        label={dropdownLabel}
-                        onClickItem={item =>
-                            history.push(`/schema/${item.type}`)}
-                    />
                 </div>
                 <Switch>
                     <Route
@@ -191,10 +180,18 @@ class SchemaExplorer extends Component {
                     <Route
                         render={() => {
                             return (
-                                <Message
-                                    type="warning"
-                                    title="Please pick a Schema Entity"
-                                />
+                                <div className="container">
+                                    <SchemaDropdown
+                                        onClickItem={item =>
+                                            history.push(
+                                                `/schema/${item.type}`
+                                            )}
+                                    />
+                                    <Message
+                                        type="warning"
+                                        title="Please pick a Schema Entity"
+                                    />
+                                </div>
                             );
                         }}
                     />
@@ -294,7 +291,7 @@ class CodeView extends Component {
     }
 }
 
-const SchemaEntity = ({ match }) => {
+const SchemaEntity = ({ match, history }) => {
     const { props, relations, name, def, type } = schemaMap[
         match.params.entity
     ];
@@ -335,8 +332,12 @@ const SchemaEntity = ({ match }) => {
     });
 
     return (
-        <div className="SchemaEntity">
-            <div className="container">
+        <div className="container">
+            <SchemaDropdown
+                selected={type}
+                onClickItem={item => history.push(`/schema/${item.type}`)}
+            />
+            <div className="SchemaEntity">
                 <h2>{name}</h2>
                 <p>
                     <code>
