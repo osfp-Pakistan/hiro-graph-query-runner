@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { Switch, Route, withRouter } from "react-router-dom";
+import { Switch, Route, withRouter, Redirect } from "react-router-dom";
 import cx from "classnames";
 import { createTask, whenTask } from "hiro-graph-redux";
 
@@ -8,6 +8,7 @@ import parseUserQuery from "../../utils/parse-user-query";
 import { SchemaDropdown, schemaData, schemaTypes } from "../SchemaExplorer";
 import { ResultTable, ResultDescription } from "../Result";
 import Message from "../Message";
+import { parse } from "querystring";
 
 import "./ORM.css";
 
@@ -31,7 +32,7 @@ class QueryRunnerResults extends Component {
             pre: () => null,
             loading: () => null,
             error: err => <pre>{err.stack}</pre>,
-            ok: items => (
+            ok: items =>
                 <div className="QueryRunnerResults">
                     <div className="container">
                         <ul className="nav nav-pills">
@@ -69,17 +70,18 @@ class QueryRunnerResults extends Component {
                     {view === "table" && <ResultTable queryTask={task} />}
 
                 </div>
-            )
         });
     }
 }
 
 class BaseQueryRunner extends Component {
     handleClickExec = () => {
-        const { query, type, triggerQuery } = this.props;
+        const { query, method, type, options, triggerQuery } = this.props;
         triggerQuery({
             type,
-            query
+            method,
+            query,
+            options
         });
     };
 
@@ -118,8 +120,10 @@ class BaseQueryRunner extends Component {
 const {
     action: customQueryAction,
     selector: customQueryTaskSelector
-} = createTask(({ orm }, { type, query, options = {} }) => {
-    return orm[type].find(query, { ...options, plain: true });
+} = createTask(({ orm }, { method, type, query, options = {} }) => {
+    return method === "search"
+        ? orm[type].search(query, {}, { ...options, plain: true })
+        : orm[type][method](query, { ...options, plain: true });
 }, () => "CUSTOM");
 
 const mstp = (state, props) => {
@@ -156,15 +160,32 @@ class CodeEditor extends Component {
         const value = this.editor
             .getValue()
             .replace(this.props.prefix + "(", "")
-            .replace(/\)$/, "");
+            .replace(/\)$/, "")
+            .trim();
 
         if (this.props.onChange) {
             this.props.onChange(value);
         }
     };
 
-    getDefaultValue = (prefix = this.props.prefix) => {
-        return [prefix + "({", "    ", "})"];
+    getDefaultValue = (
+        prefix = this.props.prefix,
+        method = this.props.method
+    ) => {
+        let bl, br;
+        switch (method) {
+            case "search":
+            case "findById":
+                bl = "(";
+                br = ")";
+                break;
+            case "find":
+            case "findOne":
+            default:
+                bl = "({";
+                br = "})";
+        }
+        return [prefix + bl, "    ", br];
     };
 
     setDefaultValue = prefix => {
@@ -190,14 +211,25 @@ class CodeEditor extends Component {
             this.editor.destroy();
         }
     }
-
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.prefix !== this.props.prefix) {
-            const currFirstLine = this.getDefaultValue(this.props.prefix)[0];
-            const nextFirstLine = this.getDefaultValue(nextProps.prefix)[0];
-            const nextVal = this.editor
+    componentWillReceiveProps({ prefix, method }) {
+        if (prefix !== this.props.prefix || method !== this.props.method) {
+            const currDefaultValue = this.getDefaultValue(
+                this.props.prefix,
+                this.props.method
+            );
+            const currFirstLine = currDefaultValue[0];
+            const currLastLine = currDefaultValue[currDefaultValue.length - 1];
+            const nextDefaultValue = this.getDefaultValue(prefix, method);
+            const nextFirstLine = nextDefaultValue[0];
+            const nextLastLine = nextDefaultValue[nextDefaultValue.length - 1];
+            let nextVal = this.editor
                 .getValue()
                 .replace(currFirstLine, nextFirstLine);
+            if (nextLastLine !== nextFirstLine) {
+                nextVal =
+                    nextVal.substring(0, nextVal.length - currLastLine.length) +
+                    nextLastLine;
+            }
             setImmediate(() => {
                 this.setValue(nextVal, false);
                 this.editor.focus();
@@ -206,7 +238,6 @@ class CodeEditor extends Component {
     }
 
     componentDidMount() {
-        console.log(schemaData);
         import("brace").then(ace => {
             this.setState(
                 {
@@ -254,7 +285,8 @@ class CodeEditor extends Component {
                                             words.push({
                                                 name: prop.dst + ":",
                                                 value: prop.dst,
-                                                meta: `${prop.src} (${schema.def.name}) [${prop.codec}]`
+                                                meta: `${prop.src} (${schema.def
+                                                    .name}) [${prop.codec}]`
                                             });
                                         } else if (
                                             strContains(prop.dst, prefix)
@@ -262,7 +294,8 @@ class CodeEditor extends Component {
                                             matches.push({
                                                 name: prop.dst + ":",
                                                 value: prop.dst,
-                                                meta: `${prop.src} (${schema.def.name}) [${prop.codec}]`
+                                                meta: `${prop.src} (${schema.def
+                                                    .name}) [${prop.codec}]`
                                             });
                                         }
                                     });
@@ -332,7 +365,84 @@ class CodeEditor extends Component {
     }
 }
 
-const createOrmPrefix = selected => `orm.${selected.def.name}.find`;
+const Options = ({ options, onChange }) =>
+    <div className="Options container">
+        <small>Options</small>
+        {Object.keys(options).map(option =>
+            <div key={option} className="form-control">
+                <label>
+                    <code>{option}{" "}</code>
+                    <input
+                        type="checkbox"
+                        checked={options[option]}
+                        onChange={() =>
+                            onChange({
+                                ...options,
+                                [option]: !options[option]
+                            })}
+                    />
+                </label>
+            </div>
+        )}
+    </div>;
+
+const createOrmPrefix = (selected, method) =>
+    `orm.${selected.def.name}.${method}`;
+
+const methods = ["find", "findOne", "findById", "search"];
+
+export class MethodsDropdown extends Component {
+    state = {
+        open: false
+    };
+
+    open = () => {
+        this.setState({ open: true });
+    };
+
+    close = () => {
+        this.setState({ open: false });
+    };
+
+    handleBlur = () => {
+        this.tid = setTimeout(this.close, 300);
+    };
+
+    componentWillUnmount() {
+        clearTimeout(this.tid);
+    }
+
+    render() {
+        const { open } = this.state;
+        const { label, onClickItem, selected, className } = this.props;
+
+        return (
+            <div className={cx("dropdown", open && "show", className)}>
+                <a
+                    tabIndex="-1"
+                    className="btn btn-secondary dropdown-toggle"
+                    onFocus={this.open}
+                    onBlur={this.handleBlur}
+                >
+                    {selected ? <code>{selected}()</code> : label}
+                </a>
+                <div className="dropdown-menu">
+                    {methods.map(method => {
+                        return (
+                            <button
+                                key={method}
+                                className="dropdown-item"
+                                onClick={() => onClickItem(method)}
+                            >
+                                <code>{method}()</code>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    }
+}
 
 const ORM = () => {
     return (
@@ -340,28 +450,6 @@ const ORM = () => {
             <div className="container">
                 <div className="toolbar">
                     <h2>ORM Explorer:</h2>
-                    <Switch>
-                        <Route
-                            path={`/orm/:entity(${schemaTypes})`}
-                            component={({ match, history }) => (
-                                <SchemaDropdown
-                                    className="dropdown-menu-right"
-                                    selected={match.params.entity}
-                                    onClickItem={item =>
-                                        history.push("/orm/" + item.type)}
-                                />
-                            )}
-                        />
-                        <Route
-                            render={({ history }) => (
-                                <SchemaDropdown
-                                    className="dropdown-menu-right"
-                                    onClickItem={item =>
-                                        history.push("/orm/" + item.type)}
-                                />
-                            )}
-                        />
-                    </Switch>
                 </div>
             </div>
             <Switch>
@@ -370,12 +458,9 @@ const ORM = () => {
                     component={Explorer}
                 />
                 <Route
-                    render={() => (
-                        <Message
-                            type="warning"
-                            title="Please pick a Schema Entity"
-                        />
-                    )}
+                    exact
+                    path="/orm"
+                    render={() => <Redirect to="/orm/person?method=find" />}
                 />
                 }
             </Switch>
@@ -383,11 +468,17 @@ const ORM = () => {
     );
 };
 
-export default withRouter(ORM);
+export default ORM;
+
+const getMethodFromQuerystring = str => parse(str.replace(/^\?/, "")).method;
 
 class Explorer extends Component {
     state = {
-        query: undefined
+        query: undefined,
+        options: {
+            raw: false
+        },
+        method: "find"
     };
 
     handleQueryChange = value => {
@@ -402,28 +493,68 @@ class Explorer extends Component {
         );
     };
 
+    handleOptionsChange = options => {
+        this.setState({
+            options
+        });
+    };
+
     render() {
-        const { match } = this.props;
-        const { query } = this.state;
+        const { match, location, history } = this.props;
+        const { query, options } = this.state;
+        const method = getMethodFromQuerystring(location.search);
         const entity = schemaData.filter(
             v => v.type === match.params.entity
         )[0];
         return (
             <div>
                 <div className="container">
-                    <CodeEditor
-                        schema={entity}
-                        prefix={createOrmPrefix(entity)}
-                        onChange={this.handleQueryChange}
-                    />
+                    <div className="OrmPrimaryOptions">
+                        <div className="OrmPrimaryOption">
+                            <label>Type:</label>
+                            <SchemaDropdown
+                                className="dropdown-menu-right"
+                                selected={match.params.entity}
+                                onClickItem={item =>
+                                    history.push({
+                                        pathname: "/orm/" + item.type,
+                                        search: location.search
+                                    })}
+                            />
+                        </div>
+                        <div className="OrmPrimaryOption">
+                            <label>Method:</label>
+                            <MethodsDropdown
+                                className="dropdown-menu-right"
+                                selected={method}
+                                onClickItem={m =>
+                                    history.push({
+                                        pathname: location.pathname,
+                                        search: "?method=" + m
+                                    })}
+                            />
+                        </div>
+                    </div>
+                    {entity &&
+                        <CodeEditor
+                            schema={entity}
+                            prefix={createOrmPrefix(entity, method)}
+                            method={method}
+                            onChange={this.handleQueryChange}
+                        />}
                 </div>
-                <div className="container-fluid">
+                <Options
+                    onChange={this.handleOptionsChange}
+                    options={options}
+                />
+                {entity &&
                     <QueryRunner
                         type={entity.def.name}
                         schema={entity}
                         query={query}
-                    />
-                </div>
+                        method={method}
+                        options={options}
+                    />}
             </div>
         );
     }

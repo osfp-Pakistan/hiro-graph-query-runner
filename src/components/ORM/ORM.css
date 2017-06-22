@@ -29,3 +29,11 @@
 .exec-query {
     margin-left: auto;
 }
+
+.OrmPrimaryOptions {
+    display: flex;
+}
+
+.OrmPrimaryOption {
+    margin-right: 16px;
+}
