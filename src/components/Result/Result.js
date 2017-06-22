@@ -11,6 +11,9 @@ export const ResultTable = ({ id, queryTask }) => {
         loading: () => <Loader title="running query..." />,
         error: err => <pre><code>{err.message}</code></pre>,
         ok: results => {
+            if (!Array.isArray(results)) {
+                results = [results];
+            }
             let keys, rows;
             if (results.length) {
                 [keys, rows] = preprocess(results);

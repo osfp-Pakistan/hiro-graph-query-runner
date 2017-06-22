@@ -19,10 +19,10 @@ export function parseUserQueryEval(raw) {
 const prepareUserQueryString = str => {
     const userQuery = str.trim();
     const len = userQuery.length;
-    if (userQuery[0] === "{" && userQuery[len - 1] === "}") {
-        return userQuery;
+    if (userQuery[0] === "{" && !userQuery[len - 1] === "}") {
+        return null;
     }
-    return null;
+    return userQuery;
 };
 
 const workerStart = "var userQuery; try { userQuery = ";
