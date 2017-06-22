@@ -1,12 +1,15 @@
 import React, { Component } from "react";
-import { createTask, whenTask } from "hiro-graph-redux";
-import { SchemaDropdown, schemaData } from "../SchemaExplorer";
-import { ResultTable } from "../Result";
 import { connect } from "react-redux";
-import mappings from "hiro-graph-orm-mappings";
-import "./ORM.css";
-import parseUserQuery from "../../utils/parse-user-query";
+import { Switch, Route, withRouter } from "react-router-dom";
 import cx from "classnames";
+import { createTask, whenTask } from "hiro-graph-redux";
+
+import parseUserQuery from "../../utils/parse-user-query";
+import { SchemaDropdown, schemaData, schemaTypes } from "../SchemaExplorer";
+import { ResultTable, ResultDescription } from "../Result";
+import Message from "../Message";
+
+import "./ORM.css";
 
 const queryKeywords = ["$and", "$or", "$search", "$not", "$range", "$missing"];
 
@@ -28,7 +31,7 @@ class QueryRunnerResults extends Component {
             pre: () => null,
             loading: () => null,
             error: err => <pre>{err.stack}</pre>,
-            ok: items =>
+            ok: items => (
                 <div className="QueryRunnerResults">
                     <div className="container">
                         <ul className="nav nav-pills">
@@ -58,6 +61,7 @@ class QueryRunnerResults extends Component {
                     </div>
                     {view === "json" &&
                         <div className="container">
+                            <ResultDescription {...task} />
                             <pre>
                                 <code>{JSON.stringify(items, null, 4)}</code>
                             </pre>
@@ -65,6 +69,7 @@ class QueryRunnerResults extends Component {
                     {view === "table" && <ResultTable queryTask={task} />}
 
                 </div>
+            )
         });
     }
 }
@@ -79,7 +84,7 @@ class BaseQueryRunner extends Component {
     };
 
     render() {
-        const { task, query, schema } = this.props;
+        const { task, query } = this.props;
         let status = "Ready";
         let loading = whenTask(task, { loading: () => true });
         if (!query) {
@@ -180,6 +185,12 @@ class CodeEditor extends Component {
         }
     };
 
+    componentWillUnmount() {
+        if (this.editor) {
+            this.editor.destroy();
+        }
+    }
+
     componentWillReceiveProps(nextProps) {
         if (nextProps.prefix !== this.props.prefix) {
             const currFirstLine = this.getDefaultValue(this.props.prefix)[0];
@@ -243,8 +254,7 @@ class CodeEditor extends Component {
                                             words.push({
                                                 name: prop.dst + ":",
                                                 value: prop.dst,
-                                                meta: `${prop.src} (${schema.def
-                                                    .name})`
+                                                meta: `${prop.src} (${schema.def.name}) [${prop.codec}]`
                                             });
                                         } else if (
                                             strContains(prop.dst, prefix)
@@ -252,8 +262,7 @@ class CodeEditor extends Component {
                                             matches.push({
                                                 name: prop.dst + ":",
                                                 value: prop.dst,
-                                                meta: `${prop.src} (${schema.def
-                                                    .name})`
+                                                meta: `${prop.src} (${schema.def.name}) [${prop.codec}]`
                                             });
                                         }
                                     });
@@ -288,8 +297,6 @@ class CodeEditor extends Component {
                             } = editor.selection.getCursor();
                             const readOnlySections = this.getDefaultValue();
                             const firstRow = readOnlySections[0];
-                            const lastRow =
-                                readOnlySections[readOnlySections.length - 1];
                             const totalRows = editor.session.getLength();
                             const isFirstRow = row === 0;
                             const isLastRow = row + 1 === totalRows;
@@ -327,17 +334,65 @@ class CodeEditor extends Component {
 
 const createOrmPrefix = selected => `orm.${selected.def.name}.find`;
 
-export default class ORM extends Component {
+const ORM = () => {
+    return (
+        <div className="container-fluid">
+            <div className="container">
+                <div className="toolbar">
+                    <h2>ORM Explorer:</h2>
+                    <Switch>
+                        <Route
+                            path={`/orm/:entity(${schemaTypes})`}
+                            component={({ match, history }) => (
+                                <SchemaDropdown
+                                    className="dropdown-menu-right"
+                                    selected={match.params.entity}
+                                    onClickItem={item =>
+                                        history.push("/orm/" + item.type)}
+                                />
+                            )}
+                        />
+                        <Route
+                            render={({ history }) => (
+                                <SchemaDropdown
+                                    className="dropdown-menu-right"
+                                    onClickItem={item =>
+                                        history.push("/orm/" + item.type)}
+                                />
+                            )}
+                        />
+                    </Switch>
+                </div>
+            </div>
+            <Switch>
+                <Route
+                    path={`/orm/:entity(${schemaTypes})`}
+                    component={Explorer}
+                />
+                <Route
+                    render={() => (
+                        <Message
+                            type="warning"
+                            title="Please pick a Schema Entity"
+                        />
+                    )}
+                />
+                }
+            </Switch>
+        </div>
+    );
+};
+
+export default withRouter(ORM);
+
+class Explorer extends Component {
     state = {
-        query: undefined,
-        selected: undefined
+        query: undefined
     };
 
     handleQueryChange = value => {
-        console.log(value);
         parseUserQuery(value).then(
             v => {
-                console.log(v);
                 this.setState({ query: v });
             },
             err => {
@@ -347,39 +402,28 @@ export default class ORM extends Component {
         );
     };
 
-    handleSelectSchema = item => {
-        this.setState({
-            selected: item
-        });
-    };
-
     render() {
-        const { query, selected } = this.state;
+        const { match } = this.props;
+        const { query } = this.state;
+        const entity = schemaData.filter(
+            v => v.type === match.params.entity
+        )[0];
         return (
-            <div className="container-fluid">
+            <div>
                 <div className="container">
-                    <div className="toolbar">
-                        <h2>ORM Explorer:</h2>
-                        <SchemaDropdown
-                            className="dropdown-menu-right"
-                            label="Select A Schema!"
-                            selected={selected}
-                            onClickItem={this.handleSelectSchema}
-                        />
-                    </div>
-                    {selected &&
-                        <CodeEditor
-                            schema={selected}
-                            prefix={createOrmPrefix(selected)}
-                            onChange={this.handleQueryChange}
-                        />}
+                    <CodeEditor
+                        schema={entity}
+                        prefix={createOrmPrefix(entity)}
+                        onChange={this.handleQueryChange}
+                    />
                 </div>
-                {selected &&
+                <div className="container-fluid">
                     <QueryRunner
-                        type={selected.def.name}
-                        schema={selected}
+                        type={entity.def.name}
+                        schema={entity}
                         query={query}
-                    />}
+                    />
+                </div>
             </div>
         );
     }

@@ -17,16 +17,23 @@ export const ResultTable = ({ id, queryTask }) => {
             }
             return (
                 <div>
-                    <pre>
-                        {`got ${results.length} result${results.length === 1
-                            ? ""
-                            : "s"} in ${queryTask.finish - queryTask.start}ms`}
-                    </pre>
+                    <ResultDescription {...queryTask} />
                     {results.length && <Table keys={keys} rows={rows} />}
                 </div>
             );
         }
     });
+};
+
+export const ResultDescription = ({ result, start, finish }) => {
+    if (!(result && start && finish)) {
+        return null;
+    }
+    return (
+        <pre>
+            {`got ${result.length} result${result.length === 1 ? "" : "s"} in ${finish - start}ms`}
+        </pre>
+    );
 };
 
 const mstp = (state, { id }) => {
