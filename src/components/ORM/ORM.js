@@ -122,7 +122,7 @@ const {
     selector: customQueryTaskSelector
 } = createTask(({ orm }, { method, type, query, options = {} }) => {
     return method === "search"
-        ? orm[type].search(query, {}, { ...options, plain: true })
+        ? orm[type].search(query[0], query[1], { ...options, plain: true })
         : orm[type][method](query, { ...options, plain: true });
 }, () => "CUSTOM");
 
@@ -365,25 +365,47 @@ class CodeEditor extends Component {
     }
 }
 
+const toString = Object.prototype.toString;
+const isBoolean = input => toString.call(input) === "[object Boolean]";
+const isNumber = input => toString.call(input) === "[object Number]";
+
 const Options = ({ options, onChange }) =>
-    <div className="Options container">
+    <div className="container">
         <small>Options</small>
-        {Object.keys(options).map(option =>
-            <div key={option} className="form-control">
-                <label>
-                    <code>{option}{" "}</code>
-                    <input
-                        type="checkbox"
-                        checked={options[option]}
-                        onChange={() =>
-                            onChange({
-                                ...options,
-                                [option]: !options[option]
-                            })}
-                    />
-                </label>
-            </div>
-        )}
+        <div className="Options">
+            {Object.keys(options).map(option => {
+                const props = isBoolean(options[option])
+                    ? {
+                          type: "checkbox",
+                          checked: options[option],
+                          onChange: () =>
+                              onChange({
+                                  ...options,
+                                  [option]: !options[option]
+                              })
+                      }
+                    : {
+                          type: isNumber(options[option]) ? "number" : "text",
+                          value: options[option],
+                          onChange: e =>
+                              onChange({
+                                  ...options,
+                                  [option]: e.target.type === "number"
+                                      ? Number(e.target.value)
+                                      : e.target.value
+                              })
+                      };
+
+                return (
+                    <span className="Option" key={option}>
+                        <label>
+                            {option}{": "}
+                            <input {...props} />
+                        </label>
+                    </span>
+                );
+            })}
+        </div>
     </div>;
 
 const createOrmPrefix = (selected, method) =>
@@ -476,13 +498,20 @@ class Explorer extends Component {
     state = {
         query: undefined,
         options: {
-            raw: false
-        },
-        method: "find"
+            raw: false,
+            offset: 0,
+            limit: 50
+        }
+    };
+
+    isSearch = () => {
+        const { location } = this.props;
+        const method = getMethodFromQuerystring(location.search);
+        return method === "search";
     };
 
     handleQueryChange = value => {
-        parseUserQuery(value).then(
+        parseUserQuery(value, this.isSearch()).then(
             v => {
                 this.setState({ query: v });
             },

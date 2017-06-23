@@ -1,4 +1,4 @@
-import React from "react";
+import React, { PureComponent } from "react";
 import { connect } from "react-redux";
 import { whenTask } from "hiro-graph-redux";
 
@@ -6,27 +6,30 @@ import { queryTaskSelector } from "../../tasks/query.js";
 import Loader from "../Loader";
 import Table from "../Table";
 
-export const ResultTable = ({ id, queryTask }) => {
-    return whenTask(queryTask, {
-        loading: () => <Loader title="running query..." />,
-        error: err => <pre><code>{err.message}</code></pre>,
-        ok: results => {
-            if (!Array.isArray(results)) {
-                results = [results];
+export class ResultTable extends PureComponent {
+    render() {
+        const { id, queryTask } = this.props;
+        return whenTask(queryTask, {
+            loading: () => <Loader title="running query..." />,
+            error: err => <pre><code>{err.message}</code></pre>,
+            ok: results => {
+                if (!Array.isArray(results)) {
+                    results = [results];
+                }
+                let keys, rows;
+                if (results.length) {
+                    [keys, rows] = preprocess(results);
+                }
+                return (
+                    <div>
+                        <ResultDescription {...queryTask} />
+                        {results.length && <Table keys={keys} rows={rows} />}
+                    </div>
+                );
             }
-            let keys, rows;
-            if (results.length) {
-                [keys, rows] = preprocess(results);
-            }
-            return (
-                <div>
-                    <ResultDescription {...queryTask} />
-                    {results.length && <Table keys={keys} rows={rows} />}
-                </div>
-            );
-        }
-    });
-};
+        });
+    }
+}
 
 export const ResultDescription = ({ result, start, finish }) => {
     if (!(result && start && finish)) {
@@ -34,7 +37,9 @@ export const ResultDescription = ({ result, start, finish }) => {
     }
     return (
         <pre>
-            {`got ${result.length} result${result.length === 1 ? "" : "s"} in ${finish - start}ms`}
+            {`got ${result.length} result${result.length === 1
+                ? ""
+                : "s"} in ${finish - start}ms`}
         </pre>
     );
 };
@@ -99,7 +104,7 @@ const KEY_OGIT = 2;
 const KEY_FREE = 3;
 
 function getKeyType(key) {
-    if (key === "ogit/_id") {
+    if (key === "ogit/_id" || key === "_id") {
         return KEY_ID;
     }
     if (!/^ogit\//.test(key)) {
@@ -117,6 +122,9 @@ const hammerTimeFields = new Set([
     "ogit/creationTime",
     "ogit/modificationTime",
     "ogit/timestamp",
+    "_fetched",
+    "_created-on",
+    "_modified-on",
     "/CTIME",
     "/MTIME",
     "/ETIME",
@@ -130,7 +138,7 @@ function formatField(vtx) {
     return key => {
         switch (true) {
             case key in vtx === false:
-                return <code>null</code>;
+                return "";
             case hammerTimeFields.has(key):
                 const date = new Date(parseInt(vtx[key], 10));
                 return (
@@ -143,7 +151,10 @@ function formatField(vtx) {
             default:
                 // other wise it is just a string.
                 // but we will coerce anyway.
-                return "" + vtx[key];
+                return (
+                    "" +
+                    JSON.stringify(vtx[key]).replace(/^"/, "").replace(/"$/, "")
+                );
         }
     };
 }
