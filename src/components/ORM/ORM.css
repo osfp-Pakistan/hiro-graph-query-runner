@@ -37,3 +37,12 @@
 .OrmPrimaryOption {
     margin-right: 16px;
 }
+
+.Options {
+    display: flex;
+    align-items: center;
+}
+
+.Option {
+    margin-right: 8px;
+}

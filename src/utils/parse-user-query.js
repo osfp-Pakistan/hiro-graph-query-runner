@@ -16,13 +16,13 @@ export function parseUserQueryEval(raw) {
     });
 }
 
-const prepareUserQueryString = str => {
+const prepareUserQueryString = (str, asArray) => {
     const userQuery = str.trim();
     const len = userQuery.length;
     if (userQuery[0] === "{" && !userQuery[len - 1] === "}") {
         return null;
     }
-    return userQuery;
+    return asArray ? "[" + userQuery + "]" : userQuery;
 };
 
 const workerStart = "var userQuery; try { userQuery = ";
@@ -32,9 +32,9 @@ const rError = /@@ERROR@@/;
 let previousWorker;
 let previousWorkerReject;
 
-export const parseUserQueryWorker = str => {
+export const parseUserQueryWorker = (str, asArray = false) => {
     return new Promise((resolve, reject) => {
-        const userQuery = prepareUserQueryString(str);
+        const userQuery = prepareUserQueryString(str, asArray);
         if (userQuery) {
             if (previousWorkerReject) {
                 previousWorkerReject(new Error("Interrupted"));
@@ -46,7 +46,7 @@ export const parseUserQueryWorker = str => {
             previousWorkerReject = reject;
             let code, url, worker;
             try {
-                code = workerStart + str + workerEnd;
+                code = workerStart + userQuery + workerEnd;
                 url = URL.createObjectURL(
                     new Blob([code], { type: "text/javascript" })
                 );
@@ -78,9 +78,9 @@ export const parseUserQueryWorker = str => {
     });
 };
 
-export default function parseUserQuery(str) {
+export default function parseUserQuery(...args) {
     if (typeof Worker !== "undefined") {
-        return parseUserQueryWorker(str);
+        return parseUserQueryWorker(...args);
     }
-    return parseUserQueryEval(str);
+    return parseUserQueryEval(...args);
 }
